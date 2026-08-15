@@ -534,6 +534,7 @@ export interface GraphNodeData {
   id: number;
   label: string;
   domain: string;
+  url?: string;
   val: number;
   color: string;
   isSource: boolean;
@@ -597,18 +598,19 @@ export function buildGraphFromScorecard(sc: CredibilityScorecard): PropagationGr
   }];
 
   // ── If backend supplies explicit sources, use them ───────────────────────
-  if (sc.sources_used && sc.sources_used.length > 0) {
-    sc.sources_used.slice(0, 14).forEach((s, i) => {
+  if (sc.corroboration?.top_sources && sc.corroboration.top_sources.length > 0) {
+    sc.corroboration.top_sources.slice(0, 14).forEach((s, i) => {
       const e   = CREDIBLE_SOURCES[s.domain];
-      const col = s.isCredible ? '#22c55e' : '#ef4444';
+      const col = s.trusted ? '#22c55e' : '#ef4444';
       nodes.push({
         id:        i + 1,
         label:     s.domain,
         domain:    s.domain,
-        val:       s.isCredible ? 4 : 3,
+        url:       s.url,
+        val:       s.trusted ? 4 : 3,
         color:     col,
         isSource:  false,
-        credScore: s.credibilityScore ?? e?.score ?? null,
+        credScore: e?.score ?? null,
         credLabel: e?.label ?? 'Unknown',
       });
     });

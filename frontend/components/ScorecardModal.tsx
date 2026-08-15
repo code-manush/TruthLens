@@ -78,33 +78,119 @@ export default function ScorecardModal({ sc, onClose }: Props) {
   const downloadPDF = async () => {
     if (!panelRef.current) return;
 
-    // ── Step 1: snapshot the graph canvas ───────────────────────────────
-    const graphCanvas = graphContainerRef.current?.querySelector('canvas');
-    const snapshotUrl = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
+    // ── Step 1: Snapshot the graph canvas before touching the DOM ──────────
+    const graphCanvas  = graphContainerRef.current?.querySelector('canvas');
+    const snapshotUrl  = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
 
-    // ── Step 2: replace interactive graph with static image ─────────────
+    // ── Step 2: Switch graph → static image ────────────────────────────────
     setPdfGraphImage(snapshotUrl);
-    await new Promise<void>(r => setTimeout(r, 180));          // let React re-render
 
-    // ── Step 3: render the panel to PDF ─────────────────────────────────
+    // ── Step 3: Expand the modal body to FULL scroll height ────────────────
+    // The panel body is the scrollable child — we temporarily unlock it
+    // so html2canvas can see every pixel, then restore after.
+    const bodyEl = panelRef.current.querySelector<HTMLElement>('[data-pdf-body]');
+    let savedMaxH = '';
+    let savedOverflow = '';
+    if (bodyEl) {
+      savedMaxH    = bodyEl.style.maxHeight;
+      savedOverflow = bodyEl.style.overflowY;
+      bodyEl.style.maxHeight  = 'none';
+      bodyEl.style.overflowY  = 'visible';
+    }
+
+    // The panel itself also needs uncapping
+    const savedPanelMaxH  = panelRef.current.style.maxHeight;
+    const savedPanelOverflow = panelRef.current.style.overflow;
+    
+    panelRef.current.style.maxHeight = 'none';
+    panelRef.current.style.overflow  = 'visible';
+    
+    // Fix: Remove animation class completely so the html2canvas clone iframe 
+    // doesn't restart the fade-in animation and capture a ghost frame.
+    const hadModalIn = panelRef.current.classList.contains('modal-in');
+    if (hadModalIn) {
+      panelRef.current.classList.remove('modal-in');
+    }
+    panelRef.current.style.setProperty('opacity', '1', 'important');
+    panelRef.current.style.setProperty('transform', 'none', 'important');
+    panelRef.current.style.setProperty('animation', 'none', 'important');
+
+    // Let React re-render and browser reflow
+    await new Promise<void>(r => setTimeout(r, 250));
+
+    // ── Step 4: Capture ────────────────────────────────────────────────────
     const { default: html2canvas } = await import('html2canvas');
     const { jsPDF }                = await import('jspdf');
+
     const canvas = await html2canvas(panelRef.current, {
-      scale: 2,
+      scale: 3,                     // triple-res → crisp on retina & print
       useCORS: true,
+      allowTaint: true,
       backgroundColor: '#ffffff',
-      // Skip any remaining canvas elements (safety net)
+      logging: false,
+      imageTimeout: 0,
+      // Let html2canvas capture the full rendered height
+      windowWidth:  panelRef.current.scrollWidth,
+      windowHeight: panelRef.current.scrollHeight,
       ignoreElements: el => el.tagName === 'CANVAS',
     });
-    const img = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const w   = pdf.internal.pageSize.getWidth();
-    pdf.addImage(img, 'PNG', 0, 0, w, (canvas.height * w) / canvas.width);
-    pdf.save(`TruthLens_${sc.domain || 'report'}.pdf`);
 
-    // ── Step 4: restore interactive graph ───────────────────────────────
+    // ── Step 5: Restore panel dimensions ──────────────────────────────────
+    panelRef.current.style.maxHeight = savedPanelMaxH;
+    panelRef.current.style.overflow  = savedPanelOverflow;
+    
+    panelRef.current.style.removeProperty('opacity');
+    panelRef.current.style.removeProperty('transform');
+    panelRef.current.style.removeProperty('animation');
+    if (hadModalIn) {
+      panelRef.current.classList.add('modal-in');
+    }
+    
+    if (bodyEl) {
+      bodyEl.style.maxHeight  = savedMaxH;
+      bodyEl.style.overflowY  = savedOverflow;
+    }
     setPdfGraphImage(null);
+
+    // ── Step 6: Build multi-page PDF ───────────────────────────────────────
+    const pdf    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW  = pdf.internal.pageSize.getWidth();   // 210 mm
+    const pageH  = pdf.internal.pageSize.getHeight();  // 297 mm
+
+    // How many mm does 1 canvas pixel equal?
+    const mmPerPx = pageW / canvas.width;
+    const totalH  = canvas.height * mmPerPx;           // full document height in mm
+
+    // Number of A4 pages needed
+    const pages = Math.ceil(totalH / pageH);
+
+    for (let p = 0; p < pages; p++) {
+      if (p > 0) pdf.addPage();
+
+      // Source rectangle on the canvas for this page
+      const srcY = (p * pageH) / mmPerPx;             // px offset on canvas
+      const srcH = Math.min(pageH / mmPerPx, canvas.height - srcY);
+
+      // Slice this page's strip out of the canvas
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width  = canvas.width;
+      pageCanvas.height = Math.ceil(srcH);
+      const pCtx = pageCanvas.getContext('2d')!;
+      
+      // Ensure solid white background just in case
+      pCtx.fillStyle = '#ffffff';
+      pCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+      pCtx.drawImage(canvas, 0, -srcY);
+
+      const imgData = pageCanvas.toDataURL('image/png');
+      const destH   = srcH * mmPerPx;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pageW, destH);
+    }
+
+    pdf.save(`TruthLens_${sc.domain || 'report'}.pdf`);
   };
+
 
   return (
     <div
@@ -182,7 +268,7 @@ export default function ScorecardModal({ sc, onClose }: Props) {
         </div>
 
         {/* Body */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
+        <div data-pdf-body style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
 
           {/* Title + meta */}
           <div style={{ marginBottom: '20px' }}>
@@ -354,8 +440,39 @@ export default function ScorecardModal({ sc, onClose }: Props) {
                 <img
                   src={pdfGraphImage}
                   alt="Source Verification Network"
-                  style={{ width: '100%', borderRadius: '12px', display: 'block' }}
+                  style={{ width: '100%', borderRadius: '12px', display: 'block', marginBottom: '20px' }}
                 />
+                
+                {/* List of sources for the PDF since they can't click the graph */}
+                {sc.corroboration?.top_sources && sc.corroboration.top_sources.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: '11px', fontWeight: 600, color: '#A1A1AA', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>
+                      Corroborating Articles Evaluated
+                    </p>
+                    <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {sc.corroboration.top_sources.slice(0, 15).map((s, i) => (
+                        <li key={i} style={{ 
+                          fontSize: '11px', lineHeight: 1.4, padding: '10px', 
+                          background: '#F8F7F4', borderRadius: '8px', border: '1px solid #E8E5DE' 
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ 
+                              display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
+                              background: s.trusted ? '#22c55e' : '#ef4444' 
+                            }} />
+                            <strong style={{ color: '#18181B', fontSize: '12px' }}>{s.domain}</strong>
+                            <span style={{ color: s.trusted ? '#166534' : '#991B1B', fontWeight: 600 }}>
+                              {s.trusted ? 'Credible' : 'Unverified'}
+                            </span>
+                          </div>
+                          <a href={s.url} target="_blank" rel="noreferrer" style={{ color: '#1B3A6B', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                            {s.url}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ) : (
               // Interactive graph in browser
