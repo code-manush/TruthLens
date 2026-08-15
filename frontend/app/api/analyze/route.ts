@@ -22,17 +22,32 @@ export async function POST(req: NextRequest) {
     if (text) args.push('--text', text);
 
     const result = await new Promise<string>((resolve, reject) => {
+<<<<<<< HEAD
       const proc = spawn(PYTHON_EXE, args, { 
         cwd: PYTHON_ROOT,
         env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
       });
       let stdout = '';
+=======
+      const proc = spawn(PYTHON_EXE, args, {
+        cwd: PYTHON_ROOT,
+        env: {
+          ...process.env,
+          // Force the Python child process to use UTF-8 for all I/O on Windows
+          PYTHONIOENCODING: 'utf-8',
+          PYTHONUTF8: '1',
+        },
+      });
+      const chunks: Buffer[] = [];
+>>>>>>> 5e247bcf80486eba680c196d050d414d6171064e
       let stderr = '';
 
-      proc.stdout.on('data', (d) => { stdout += d.toString(); });
-      proc.stderr.on('data', (d) => { stderr += d.toString(); });
+      // Collect raw bytes so we can decode as UTF-8 (avoids cp1252 mangling)
+      proc.stdout.on('data', (d: Buffer) => { chunks.push(d); });
+      proc.stderr.on('data', (d: Buffer) => { stderr += d.toString('utf-8'); });
 
       proc.on('close', (code) => {
+        const stdout = Buffer.concat(chunks).toString('utf-8');
         if (code === 0) {
           resolve(stdout);
         } else {
