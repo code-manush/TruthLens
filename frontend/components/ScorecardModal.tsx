@@ -1,6 +1,12 @@
 'use client';
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { CredibilityScorecard } from '@/lib/types';
+
+const PropagationGraph = dynamic(
+  () => import('@/components/PropagationGraph'),
+  { ssr: false }
+);
 
 interface Props {
   sc: CredibilityScorecard;
@@ -45,10 +51,14 @@ function DimBar({ name, score, weight, summary }: { name: string; score: number;
 }
 
 export default function ScorecardModal({ sc, onClose }: Props) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const panelRef   = useRef<HTMLDivElement>(null);
+  const overlayRef       = useRef<HTMLDivElement>(null);
+  const panelRef         = useRef<HTMLDivElement>(null);
+  const graphContainerRef = useRef<HTMLDivElement>(null);
   const { pill, bg, border, label } = verdictStyle(sc.verdict);
   const c = scoreColor(sc.overall_score);
+
+  // Holds a data-URL snapshot of the graph canvas while PDF is being rendered
+  const [pdfGraphImage, setPdfGraphImage] = useState<string | null>(null);
 
   const handleBackdrop = useCallback((e: React.MouseEvent) => {
     if (e.target === overlayRef.current) onClose();
@@ -67,14 +77,33 @@ export default function ScorecardModal({ sc, onClose }: Props) {
 
   const downloadPDF = async () => {
     if (!panelRef.current) return;
+
+    // ── Step 1: snapshot the graph canvas ───────────────────────────────
+    const graphCanvas = graphContainerRef.current?.querySelector('canvas');
+    const snapshotUrl = graphCanvas ? graphCanvas.toDataURL('image/png') : null;
+
+    // ── Step 2: replace interactive graph with static image ─────────────
+    setPdfGraphImage(snapshotUrl);
+    await new Promise<void>(r => setTimeout(r, 180));          // let React re-render
+
+    // ── Step 3: render the panel to PDF ─────────────────────────────────
     const { default: html2canvas } = await import('html2canvas');
-    const { jsPDF } = await import('jspdf');
-    const canvas = await html2canvas(panelRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-    const img    = canvas.toDataURL('image/png');
-    const pdf    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const w      = pdf.internal.pageSize.getWidth();
+    const { jsPDF }                = await import('jspdf');
+    const canvas = await html2canvas(panelRef.current, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      // Skip any remaining canvas elements (safety net)
+      ignoreElements: el => el.tagName === 'CANVAS',
+    });
+    const img = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const w   = pdf.internal.pageSize.getWidth();
     pdf.addImage(img, 'PNG', 0, 0, w, (canvas.height * w) / canvas.width);
     pdf.save(`TruthLens_${sc.domain || 'report'}.pdf`);
+
+    // ── Step 4: restore interactive graph ───────────────────────────────
+    setPdfGraphImage(null);
   };
 
   return (
@@ -310,6 +339,29 @@ export default function ScorecardModal({ sc, onClose }: Props) {
               </div>
             </div>
           )}
+
+          {/* ── Source Verification Network graph ─────────────────────── */}
+          <div ref={graphContainerRef}>
+            {pdfGraphImage ? (
+              // Static snapshot shown during PDF generation
+              <div style={{ marginTop: '20px' }}>
+                <p style={{
+                  fontSize: '11px', fontWeight: 600, color: '#A1A1AA',
+                  textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px',
+                }}>
+                  Source Verification Network
+                </p>
+                <img
+                  src={pdfGraphImage}
+                  alt="Source Verification Network"
+                  style={{ width: '100%', borderRadius: '12px', display: 'block' }}
+                />
+              </div>
+            ) : (
+              // Interactive graph in browser
+              <PropagationGraph sc={sc} />
+            )}
+          </div>
         </div>
 
         {/* Footer */}

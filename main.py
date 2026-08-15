@@ -8,6 +8,11 @@ Usage:
 """
 
 import sys
+
+# ── Force UTF-8 output so non-ASCII characters (₹, é, ñ, etc.) never crash
+# the process on Windows where the default codepage is cp1252.
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import json
 import argparse
 import logging
@@ -200,7 +205,13 @@ def main():
         sys.exit(1)
 
     if args.json:
-        print(scorecard.model_dump_json(indent=2))
+        # Write raw UTF-8 bytes directly to stdout's binary buffer.
+        # This bypasses Windows cp1252 entirely and avoids UnicodeEncodeError
+        # for characters like ₹ (\u20b9), em-dashes, etc.
+        json_bytes = scorecard.model_dump_json(indent=2).encode('utf-8')
+        sys.stdout.buffer.write(json_bytes)
+        sys.stdout.buffer.write(b'\n')
+        sys.stdout.buffer.flush()
     else:
         print_scorecard(scorecard)
 

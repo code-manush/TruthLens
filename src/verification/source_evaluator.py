@@ -16,14 +16,88 @@ class SourceEvaluator:
     final corroboration credibility score plus a human-readable summary.
     """
 
+    # Tier 1 — Premier wire services, flagship papers, official science/health agencies,
+    # and top fact-checkers. Corroboration from any of these carries strong weight.
     TIER_1_DOMAINS = {
-        "reuters.com", "apnews.com", "bbc.com", "bbc.co.uk",
-        "nature.com", "who.int", "cdc.gov", "nasa.gov",
+        # Wire services
+        "reuters.com", "apnews.com", "afp.com", "bloomberg.com", "upi.com",
+        "ansa.it", "dpa.com", "efe.com", "kyodonews.net", "yonhapnews.co.kr",
+        # Top international newspapers
+        "nytimes.com", "washingtonpost.com", "theguardian.com", "wsj.com",
+        "ft.com", "economist.com", "bbc.com", "bbc.co.uk", "newyorker.com",
+        "lemonde.fr", "spiegel.de", "thetimes.co.uk", "telegraph.co.uk",
+        # Science / Health authorities
+        "nature.com", "science.org", "nejm.org", "thelancet.com", "bmj.com",
+        "cell.com", "pnas.org", "jamanetwork.com", "cochranelibrary.com",
+        "who.int", "cdc.gov", "nih.gov", "fda.gov", "nasa.gov", "noaa.gov",
+        "pubmed.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov",
+        # Top fact-checkers
+        "snopes.com", "factcheck.org", "politifact.com", "fullfact.org",
+        "africacheck.org", "boomlive.in", "altnews.in", "bellingcat.com",
+        "icij.org", "poynter.org", "stopfake.org",
+        # International organizations
+        "un.org", "who.int", "unicef.org", "imf.org", "worldbank.org",
+        "europa.eu", "nato.int", "oecd.org", "wto.org",
     }
+
+    # Tier 2 — Trusted national outlets, broadcasters, academic institutions,
+    # regional newspapers, and government portals.
     TIER_2_DOMAINS = {
-        "theguardian.com", "nytimes.com", "washingtonpost.com",
-        "bloomberg.com", "economist.com", "npr.org", "pbs.org",
-        "snopes.com", "factcheck.org", "politifact.com",
+        # Major broadcasters
+        "npr.org", "pbs.org", "cbc.ca", "abc.net.au", "sbs.com.au",
+        "dw.com", "france24.com", "rte.ie", "voanews.com", "rferl.org",
+        "nhk.or.jp", "nhk.jp", "kbs.co.kr", "zdf.de", "ard.de",
+        "raf.it", "rai.it", "rtve.es", "rfi.fr", "euronews.com",
+        "yle.fi", "svt.se", "dr.dk", "nrk.no", "tv2.dk", "tv2.no",
+        "ctvnews.ca", "globalnews.ca", "radio-canada.ca",
+        # National newspapers
+        "theatlantic.com", "time.com", "newsweek.com", "thehindu.com",
+        "hindustantimes.com", "indianexpress.com", "ndtv.com", "livemint.com",
+        "scroll.in", "thewire.in", "theprint.in", "thequint.com",
+        "aljazeera.com", "aljazeera.net", "middleeasteye.net",
+        "japantimes.co.jp", "asahi.com", "mainichi.jp", "yomiuri.co.jp",
+        "scmp.com", "straitstimes.com", "koreaherald.com", "koreatimes.co.kr",
+        "haaretz.com", "jpost.com", "dawn.com",
+        "bostonglobe.com", "latimes.com", "chicagotribune.com",
+        "seattletimes.com", "dallasnews.com", "houstonchronicle.com",
+        "sfchronicle.com", "tampabay.com", "denverpost.com",
+        "baltimoresun.com", "startribune.com", "oregonlive.com",
+        "miamiherald.com", "smh.com.au", "theage.com.au",
+        "globeandmail.com", "nationalpost.com", "thestar.com",
+        "lemonde.fr", "lefigaro.fr", "elpais.com", "elmundo.es",
+        "corriere.it", "repubblica.it", "faz.net", "sueddeutsche.de",
+        # US TV networks
+        "cbsnews.com", "nbcnews.com", "abcnews.go.com", "cnn.com", "cnbc.com",
+        # Science / Health
+        "scientificamerican.com", "newscientist.com", "discovermagazine.com",
+        "sciencedaily.com", "phys.org", "quantamagazine.org", "statnews.com",
+        "healthline.com", "mayoclinic.org", "hopkinsmedicine.org",
+        "medicalnewstoday.com", "medscape.com", "webmd.com",
+        "arxiv.org", "sciencedirect.com", "jstor.org", "plos.org",
+        "eurekalert.org", "livescience.com", "iflscience.com",
+        "technologyreview.com", "wired.com",
+        # Academic / Think-tanks
+        "harvard.edu", "mit.edu", "stanford.edu", "yale.edu",
+        "princeton.edu", "columbia.edu", "cornell.edu", "upenn.edu",
+        "uchicago.edu", "berkeley.edu", "cam.ac.uk", "ox.ac.uk",
+        "rand.org", "cfr.org", "brookings.edu", "pewresearch.org",
+        "ourworldindata.org", "statista.com", "gallup.com",
+        "britannica.com", "wikipedia.org", "theconversation.com",
+        # Government portals
+        "gov.uk", "congress.gov", "whitehouse.gov", "state.gov",
+        "india.gov.in", "pib.gov.in", "ec.europa.eu",
+        "australia.gov.au", "canada.ca",
+        # Fact-checkers (secondary)
+        "logically.ai", "leadstories.com", "checkyourfact.com",
+        "verifythis.com", "aap.com.au", "factly.in", "factchecker.in",
+        "vishvasnews.com", "newsguardtech.com", "adfontesmedia.com",
+        # Business / Finance
+        "fortune.com", "forbes.com", "marketwatch.com", "businessinsider.com",
+        "barrons.com", "investopedia.com", "axios.com", "thehill.com",
+        "politico.com", "vox.com", "newrepublic.com", "foreignaffairs.com",
+        # Investigative
+        "propublica.org", "theintercept.com", "motherjones.com",
+        "texastribune.org", "spotlightpa.org", "vtdigger.org",
     }
 
     def evaluate(self, corroboration_result: Dict[str, Any]) -> Dict[str, Any]:

@@ -5,8 +5,12 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen3:8b"
 
-    # Tavily API
-    tavily_api_key: str = ""
+    # Tavily API — 5 keys for round-robin distribution across claims
+    tavily_api_key:   str = ""
+    tavily_api_key_2: str = ""
+    tavily_api_key_3: str = ""
+    tavily_api_key_4: str = ""
+    tavily_api_key_5: str = ""
 
     # Scoring Weights
     weight_clickbait: float = 0.20

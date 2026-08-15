@@ -6,6 +6,14 @@ export interface DimensionScore {
   summary: string;
 }
 
+/** A web source checked during fact-verification. Supplied by backend when available. */
+export interface SourceNode {
+  domain: string;
+  url?: string;
+  isCredible: boolean;
+  credibilityScore?: number;
+}
+
 export interface AdProfile {
   total_ad_slots: number;
   has_clickbait_ads: boolean;
@@ -37,6 +45,8 @@ export interface CredibilityScorecard {
   content_tone: string;
   red_flags: string[];
   positive_signals: string[];
+  /** Optional: real sources fetched during Tavily verification */
+  sources_used?: SourceNode[];
 }
 
 export type AnalysisMode = 'url' | 'text' | 'image';
