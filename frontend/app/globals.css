@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design Tokens ──────────────────────────────────────────────── */
+:root {
+  --bg:           #F8F7F4;
+  --bg-dark:      #F2F0EC;
+  --surface:      #FFFFFF;
+  --border:       #E8E5DE;
+  --border-light: #F0EDE6;
+  --text-1:       #18181B;
+  --text-2:       #52525B;
+  --text-3:       #A1A1AA;
+  --accent:       #1B3A6B;
+  --accent-light: #EEF2FA;
+  --green:        #166534;
+  --green-bg:     #F0FDF4;
+  --green-border: #BBF7D0;
+  --amber:        #92400E;
+  --amber-bg:     #FFFBEB;
+  --amber-border: #FDE68A;
+  --red:          #991B1B;
+  --red-bg:       #FEF2F2;
+  --red-border:   #FECACA;
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.65;
+}
+
+/* ── Typography ─────────────────────────────────────────────────── */
+.serif { font-family: 'Playfair Display', Georgia, serif; }
+
+/* ── Canvas ─────────────────────────────────────────────────────── */
+#net-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 1;
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up        { animation: fadeUp 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+.fade-up-d1     { animation: fadeUp 0.65s 0.08s cubic-bezier(0.22,1,0.36,1) both; }
+.fade-up-d2     { animation: fadeUp 0.65s 0.16s cubic-bezier(0.22,1,0.36,1) both; }
+.fade-up-d3     { animation: fadeUp 0.65s 0.24s cubic-bezier(0.22,1,0.36,1) both; }
+.fade-up-d4     { animation: fadeUp 0.65s 0.32s cubic-bezier(0.22,1,0.36,1) both; }
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.975); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);     }
+}
+.modal-in { animation: modalIn 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+
+@keyframes barGrow {
+  from { width: 0 !important; }
+}
+.bar-grow { animation: barGrow 0.9s 0.2s cubic-bezier(0.22,1,0.36,1) both; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1;   }
+  50%       { opacity: 0.4; }
+}
+.pulse-dot { animation: pulse 1.4s infinite; }
+.pulse-dot-d1 { animation: pulse 1.4s 0.25s infinite; }
+.pulse-dot-d2 { animation: pulse 1.4s 0.5s  infinite; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D4D0C8; border-radius: 10px; }
+
+/* ── Focus ring ─────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
