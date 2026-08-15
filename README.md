@@ -63,7 +63,7 @@ ollama run qwen3:8b
    Create a `.env` file in the root directory (where `main.py` is) and add your Tavily API key:
    ```env
    # .env
-   TAVILY_API_KEY=your_tavily_api_key_here
+   TAVILY_API_KEY=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
    OLLAMA_BASE_URL=http://localhost:11434
    OLLAMA_MODEL=qwen3:8b
    ```

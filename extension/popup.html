@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>TruthLens</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </div>
+    <span class="title">TruthLens</span>
+  </div>
+
+  <div class="content" id="content">
+    <div class="idle-state" id="idle-state">
+      <p class="desc">Analyze the credibility of the current page.</p>
+      <button id="analyze-btn">Analyze This Page</button>
+      <p class="note">Requires TruthLens local server running.</p>
+    </div>
+
+    <div class="loading-state hidden" id="loading-state">
+      <div class="spinner"></div>
+      <p>Analyzing context and corroborating with live sources...</p>
+      <p class="note">This may take a few minutes. Please don't close this popup.</p>
+    </div>
+
+    <div class="error-state hidden" id="error-state">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p id="error-msg">Failed to analyze.</p>
+      <button id="retry-btn">Try Again</button>
+    </div>
+
+    <div class="result-state hidden" id="result-state">
+      <!-- Scorecard will be injected here -->
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

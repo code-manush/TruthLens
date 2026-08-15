@@ -8,9 +8,13 @@ Usage:
 """
 
 import sys
+import io
 import json
 import argparse
 import logging
+
+if sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from src.schemas.article_schema import ArticleInput
 from src.pipeline.article_pipeline import ArticlePipeline

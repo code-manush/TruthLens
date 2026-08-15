@@ -36,6 +36,10 @@ export default function LandingPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
           <a href="#how" style={{ fontSize: '13px', color: '#71717A', textDecoration: 'none' }}>How it works</a>
           <a href="#features" style={{ fontSize: '13px', color: '#71717A', textDecoration: 'none' }}>Features</a>
+          <a href="https://github.com/TruthLens" target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: '#71717A', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Extension
+          </a>
           <Link href="/analyze" style={{
             fontSize: '13px', fontWeight: 500, color: '#FFFFFF',
             background: '#1B3A6B', padding: '7px 18px', borderRadius: '8px',
@@ -71,13 +75,14 @@ export default function LandingPage() {
                 <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
               </svg>
             </Link>
-            <a href="#how" style={{
-              display: 'inline-flex', alignItems: 'center',
+            <a href="https://github.com/TruthLens" target="_blank" rel="noreferrer" style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: '12px 24px', border: '1px solid #D4D0C8', color: '#52525B',
               borderRadius: '10px', fontSize: '14px', fontWeight: 500,
               textDecoration: 'none', background: '#FFFFFF',
             }}>
-              Learn more
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Extension
             </a>
           </div>
         </div>

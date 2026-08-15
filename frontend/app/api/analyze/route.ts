@@ -22,7 +22,10 @@ export async function POST(req: NextRequest) {
     if (text) args.push('--text', text);
 
     const result = await new Promise<string>((resolve, reject) => {
-      const proc = spawn(PYTHON_EXE, args, { cwd: PYTHON_ROOT });
+      const proc = spawn(PYTHON_EXE, args, { 
+        cwd: PYTHON_ROOT,
+        env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+      });
       let stdout = '';
       let stderr = '';
 
